@@ -1,22 +1,35 @@
 import mongoose from "mongoose";
 
-const options = {
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    deviceId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    sourceLanguage: {
+      type: String,
+      default: "en",
+    },
+    targetLanguage: {
+      type: String,
+      default: "es",
+    },
+    created: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-    collection: 'users',
-    versionKey: false
+const User = mongoose.model("User", userSchema);
 
-}
-
-const userSchema = new mongoose.Schema({
-
-    email: {type: String},
-    password: {type: String},
-    created: {type: Date, default: Date.now},
-    premium: {type: Boolean, default: false}
-
-
-}, options);
-
-const User = mongoose.model('User', userSchema)
-
-export {User};
+export default User;
