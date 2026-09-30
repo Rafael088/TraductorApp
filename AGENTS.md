@@ -6,6 +6,8 @@ Este archivo define las reglas, estructura y convenciones que todo agente debe r
 
 TraductorApp es una aplicación móvil multiplataforma (Android/iOS) con backend propio. El objetivo académico es que cada estudiante implemente funcionalidades en su propia rama y luego se integren en `master`.
 
+El producto se llama **TraduFly**. Antes de implementar cualquier funcionalidad, lee `ARQUITECTURA.md`: define pantallas, modelos, rutas y el reparto por rama.
+
 ## Stack tecnológico
 
 - **Backend:** Node.js + Express + Mongoose + MongoDB.
@@ -41,7 +43,8 @@ TraductorApp/
 │   ├── package.json
 │   └── .env                 # Variables de entorno del frontend (no subir)
 ├── .gitignore               # Reglas globales de Git
-└── AGENTS.md                # Este archivo
+├── AGENTS.md                # Este archivo
+└── ARQUITECTURA.md          # Diseño de TraduFly (pantallas, datos, rutas)
 ```
 
 ## Convenciones de código
