@@ -1,5 +1,33 @@
 import jwt from "jsonwebtoken";
+import User from "../models/users.js";
 
+
+export const identifyDevice = async (req, res, next) => {
+
+    const deviceId = req.header("x-device-id");
+
+    if (!deviceId) {
+        return res.status(401).json({
+            msg: "No hay deviceId en la peticion"
+        })
+    }
+    try {
+        const user = await User.findOne({ deviceId });
+
+        if (!user) {
+            return res.status(401).json({
+                msg: "Dispositivo no registrado"
+            })
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        return res.status(500).json({
+            msg: "Error al identificar el dispositivo"
+        })
+    }
+}
 
 export const validateJWT = (req, res, next) => {
 
