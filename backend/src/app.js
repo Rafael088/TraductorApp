@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 
 import users from './routes/users.js';
 import chats from './routes/chats.js';
+import conversations from './routes/conversations.js';
 
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.use(
 app.use(express.json())
 app.use(users)
 app.use(chats)
+app.use(conversations)
 
 
 export default app
