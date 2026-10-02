@@ -1,41 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/users.js";
 
-// Version base de identifyDevice para desbloquear /conversations.
-// Segun ARQUITECTURA.md este middleware es de la rama fer: coordinar cambios con el.
-export const identifyDevice = async (req, res, next) => {
-
-    const deviceId = req.header("x-device-id");
-
-    if (!deviceId) {
-        return res.status(401).json({
-            msg: "No hay x-device-id en la peticion",
-            ok: false
-        })
-    }
-
-    try {
-        const user = await User.findOne({ deviceId });
-
-        if (!user) {
-            return res.status(401).json({
-                msg: "Dispositivo no registrado",
-                ok: false
-            })
-        }
-
-        req.user = user;
-        next();
-    } catch (error) {
-        console.error("Error al identificar el dispositivo:", error);
-
-        return res.status(500).json({
-            msg: "Error al identificar el dispositivo",
-            ok: false
-        })
-    }
-}
-
 export const identifyDevice = async (req, res, next) => {
 
     const deviceId = req.header("x-device-id");
