@@ -2,10 +2,16 @@ import mongoose from "mongoose";
 
 const chatSchema = new mongoose.Schema(
     {
-        user: {
-            type: String,
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
             required: true,
-            trim: true,
+            index: true
+        },
+        conversationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Conversation",
+            required: true,
             index: true
         },
         originalText: {
@@ -28,22 +34,18 @@ const chatSchema = new mongoose.Schema(
             required: true,
             trim: true
         },
-        conversationId: {
-            type: String,
-            trim: true
-        },
         created: {
             type: Date,
             default: Date.now
         }
     },
     {
-        collection: "chat_history",
+        collection: "segments",
         versionKey: false
     }
 );
 
-chatSchema.index({ user: 1, created: -1 });
+chatSchema.index({ conversationId: 1, created: 1 });
 
 const Chat = mongoose.model("Chat", chatSchema);
 
