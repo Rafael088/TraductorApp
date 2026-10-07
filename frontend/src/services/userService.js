@@ -14,3 +14,10 @@ export async function getMe() {
 
   return data.user;
 }
+
+// PUT /me — cambia el nombre (requiere x-device-id).
+export async function updateMe(name) {
+  const { data } = await api.put('/me', { name });
+
+  return data.user;
+}

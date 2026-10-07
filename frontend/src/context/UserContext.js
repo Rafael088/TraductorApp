@@ -8,6 +8,7 @@ const UserContext = createContext({
   user: null,
   loading: true,
   signIn: async () => {},
+  updateUser: async () => {},
   signOut: async () => {},
 });
 
@@ -63,13 +64,19 @@ export function UserProvider({ children }) {
     setUser(nuevoUsuario);
   }
 
+  // Actualiza el perfil en memoria y en el teléfono (lo usa AjustesScreen).
+  async function updateUser(actualizado) {
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(actualizado));
+    setUser(actualizado);
+  }
+
   async function signOut() {
     await AsyncStorage.removeItem(USER_KEY);
     setUser(null);
   }
 
   return (
-    <UserContext.Provider value={{ user, loading, signIn, signOut }}>
+    <UserContext.Provider value={{ user, loading, signIn, updateUser, signOut }}>
       {children}
     </UserContext.Provider>
   );
