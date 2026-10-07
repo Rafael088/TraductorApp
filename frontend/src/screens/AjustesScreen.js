@@ -180,7 +180,7 @@ export default function AjustesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#d4d8dd',
   },
   content: {
     padding: 16,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   seccion: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#64748b',
+    color: '#27282a',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     marginTop: 20,
@@ -203,19 +203,19 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#92a197',
     borderRadius: 16,
     padding: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 12,
+    borderColor: '#161517',
+    borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 17,
-    color: '#0f172a',
-    backgroundColor: '#f8fafc',
+    fontSize: 15,
+    color: '#0d0d0e',
+    backgroundColor: '#93c4f5',
   },
   error: {
     color: '#dc2626',
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   button: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#eb254d',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
