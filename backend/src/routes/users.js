@@ -5,7 +5,7 @@ import { validateJWT, identifyDevice } from "../config/middleware.js";
 
 const router = Router();
 
-router.post("/create-users", cUser);
+router.post("/users", cUser);
 router.get("/me", identifyDevice, meUser);
 router.get("/get-users", gUser);
 router.delete("/delete-user/:id",validateJWT, dUser);
