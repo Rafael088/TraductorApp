@@ -1,5 +1,12 @@
-import HomeScreen from './src/screens/HomeScreen';
+import { StatusBar } from 'expo-status-bar';
+import { UserProvider } from './src/context/UserContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
-  return <HomeScreen />;
+  return (
+    <UserProvider>
+      <StatusBar style="light" />
+      <AppNavigator />
+    </UserProvider>
+  );
 }
