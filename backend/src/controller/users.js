@@ -82,6 +82,45 @@ export async function meUser(req, res) {
     }
 }
 
+// PUT /me — cambia el nombre del dispositivo actual (ARQUITECTURA.md §8).
+// Los idiomas se quedan bloqueados en Ajustes hasta que se decida abrirlos.
+export async function updateMe(req, res) {
+    try {
+        const { name } = req.body;
+
+        if (typeof name !== "string" || !name.trim()) {
+            return res.status(400).json({
+                msg: "El nombre no puede estar vacío",
+                ok: false
+            })
+        }
+
+        if (name.trim().length > 30) {
+            return res.status(400).json({
+                msg: "El nombre no puede superar los 30 caracteres",
+                ok: false
+            })
+        }
+
+        req.user.name = name.trim();
+        await req.user.save();
+
+        res.status(200).json({
+            msg: "Perfil actualizado correctamente",
+            ok: true,
+            user: publicUser(req.user)
+        })
+
+    } catch (error) {
+        console.error("Error al actualizar el perfil: " + error);
+
+        return res.status(500).json({
+            msg: "Error updating user profile",
+            ok: false
+        })
+    }
+}
+
 export async function gUser(req, res) {
     try {
 
