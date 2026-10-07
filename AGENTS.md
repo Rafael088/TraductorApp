@@ -13,6 +13,7 @@ El producto se llama **TraduFly**. Antes de implementar cualquier funcionalidad,
 - **Backend:** Node.js + Express + Mongoose + MongoDB.
 - **Frontend:** React Native con Expo (template `blank`).
 - **HTTP client:** Axios (ya instalado en `frontend`).
+- **Navegación:** React Navigation (`bottom-tabs` + `native-stack`), montada en `frontend/src/navigation/AppNavigator.js`.
 - **Control de versiones:** Git, con ramas por estudiante.
 
 ## Estructura del monorepo
@@ -65,9 +66,11 @@ Crear `backend/.env` a partir del conocimiento del equipo. No subir a Git.
 Ejemplo esperado:
 ```env
 PORT=5000
-MONGODB_URI=tu_uri_de_mongodb
+DB_URI=tu_uri_de_mongodb
 JWT_SECRET=tu_secreto
 ```
+
+> **Nota:** `backend/src/config/db.js` lee **`DB_URI`**. Si tu URI se llama `MONGODB_URI`, renómbrala o la conexión no se establece.
 
 ### Frontend
 Crear `frontend/.env` a partir de `frontend/.env.example`.
@@ -77,6 +80,8 @@ EXPO_PUBLIC_API_URL=http://localhost:5000
 ```
 
 > **Importante:** En dispositivos físicos `localhost` no funciona. Usa la IP local de la máquina donde corre el backend, por ejemplo `http://192.168.1.10:5000`.
+
+> Estas variables se incrustan al compilar: después de cambiar `.env`, reinicia con `npx expo start -c` (la `-c` limpia la caché).
 
 ## Cómo correr el proyecto
 
@@ -123,25 +128,40 @@ Luego escanea el QR con Expo Go (Android/iOS) o presiona `a` / `i` para emulador
 
 ## Backend — referencia rápida
 
-- Puerto por defecto: `5000`.
+- Puerto por defecto: `5000` (variable `PORT`).
 - Middleware de CORS habilitado para cualquier origen.
-- Autenticación por JWT en rutas protegidas.
-- Rutas actuales (según archivos existentes):
-  - `/create-users` — POST
-  - `/get-users` — GET (requiere JWT)
-  - `/delete-user/:id` — DELETE (requiere JWT)
-  - `/login` — POST
-  - `/change-password` — PUT (requiere JWT)
-  - `/create-chat` — POST (requiere JWT)
-  - `/get-chats` — GET (requiere JWT)
-  - `/get-chat/:id` — GET (requiere JWT)
-  - `/delete-chat/:id` — DELETE (requiere JWT)
+- Conviven dos mecanismos de autenticación mientras dura la migración a TraduFly:
+  - **`x-device-id`** → middleware `identifyDevice`: identidad por dispositivo; lo usan las rutas nuevas.
+  - **`x-token`** → middleware `validateJWT`: JWT legacy; protege las rutas antiguas.
+- Rutas activas (según archivos existentes):
+
+  | Método | Ruta | Autenticación |
+  |---|---|---|
+  | POST | `/users` | — (registro idempotente por `deviceId`) |
+  | GET | `/me` | `x-device-id` |
+  | PUT | `/me` | `x-device-id` |
+  | GET | `/get-users` | — (sin protección, pendiente de retirar) |
+  | DELETE | `/delete-user/:id` | `x-token` (pendiente de retirar) |
+  | POST | `/conversations` | `x-device-id` |
+  | PUT | `/conversations/:id/end` | `x-device-id` |
+  | GET | `/conversations` | `x-device-id` |
+  | GET | `/conversations/:id` | `x-device-id` |
+  | DELETE | `/conversations/:id` | `x-device-id` |
+  | POST | `/create-chat` | `x-token` |
+  | GET | `/get-chats` | `x-token` |
+  | GET | `/get-chat/:id` | `x-token` |
+  | DELETE | `/delete-chat/:id` | `x-token` |
+  | GET | `/home` | — (ruta de prueba) |
+
+- `routes/products.js` existe, pero **no está montada** en `app.js`.
+- No existen `/login` ni `/change-password`: TraduFly no usa contraseñas.
 - La revisión y corrección del backend es responsabilidad de los estudiantes; este archivo solo documenta lo que existe.
 
 ## Notas Expo
 
 - Este proyecto usa el template `blank` de Expo, no Expo Router.
-- Si en el futuro se decide usar navegación, instalar `@react-navigation/native` y el stack deseado con `npx expo install`.
+- **Navegación ya instalada** con `npx expo install`: `@react-navigation/native`, `@react-navigation/bottom-tabs`, `@react-navigation/native-stack`, `react-native-screens` y `react-native-safe-area-context`. Para añadir pantallas, editar `frontend/src/navigation/AppNavigator.js` en lugar de instalar otra vez los paquetes.
+- `App.js` solo monta `UserProvider` y `AppNavigator`; la lógica vive en `src/screens`, `src/context` y `src/services`.
 - Si se agrega una librería con código nativo, se requiere un development build; durante la clase se prefiere usar librerías compatibles con Expo Go.
 
 ## Contacto / coordinación
