@@ -4,7 +4,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Proximamente from '../components/Proximamente';
 import { useUser } from '../context/UserContext';
-import { AjustesScreen, BienvenidaScreen } from '../screens';
+import {
+  AjustesScreen,
+  BienvenidaScreen,
+  ConversacionScreen,
+  HistorialScreen,
+} from '../screens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -38,11 +43,12 @@ function AppTabs() {
         )}
       </Tab.Screen>
 
-      <Tab.Screen name="Historial">
-        {() => (
-          <Proximamente
-            titulo="Historial"
-            descripcion="Tus conversaciones aparecerán aquí."
+      <Tab.Screen name="Historial" options={{ headerShown: false }}>
+        {({ navigation }) => (
+          <HistorialScreen
+            onSelectConversation={(conversation) =>
+              navigation.navigate('Conversacion', { conversationId: conversation._id })
+            }
           />
         )}
       </Tab.Screen>
@@ -71,7 +77,18 @@ export default function AppNavigator() {
         {!user ? (
           <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
         ) : (
-          <Stack.Screen name="App" component={AppTabs} />
+          <>
+            <Stack.Screen name="App" component={AppTabs} />
+            <Stack.Screen name="Conversacion">
+              {({ navigation, route }) => (
+                <ConversacionScreen
+                  conversationId={route.params.conversationId}
+                  onBack={navigation.goBack}
+                  onDeleted={navigation.goBack}
+                />
+              )}
+            </Stack.Screen>
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { getConversations } from '../services/conversationService';
 
@@ -47,9 +48,12 @@ export default function HistorialScreen({ onSelectConversation }) {
     }
   }, []);
 
-  useEffect(() => {
-    loadConversations().finally(() => setLoading(false));
-  }, [loadConversations]);
+  // Recarga cada vez que la pestaña recupera el foco (p. ej. tras borrar una conversación).
+  useFocusEffect(
+    useCallback(() => {
+      loadConversations().finally(() => setLoading(false));
+    }, [loadConversations])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
