@@ -4,7 +4,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Proximamente from '../components/Proximamente';
 import { useUser } from '../context/UserContext';
-import { AjustesScreen, BienvenidaScreen } from '../screens';
+import {
+  AjustesScreen,
+  BienvenidaScreen,
+  ConversacionScreen,
+  HistorialScreen,
+} from '../screens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -39,10 +44,11 @@ function AppTabs() {
       </Tab.Screen>
 
       <Tab.Screen name="Historial">
-        {() => (
-          <Proximamente
-            titulo="Historial"
-            descripcion="Tus conversaciones aparecerán aquí."
+        {({ navigation }) => (
+          <HistorialScreen
+            onSelectConversation={(conversation) =>
+              navigation.navigate('Conversacion', { id: conversation._id })
+            }
           />
         )}
       </Tab.Screen>
@@ -54,6 +60,7 @@ function AppTabs() {
 
 // Decide qué se ve según el usuario (ARQUITECTURA.md §5):
 // sin usuario → Bienvenida. Con usuario → las tres pestañas.
+// El detalle (ConversacionScreen) vive en el stack raíz, fuera de las pestañas.
 export default function AppNavigator() {
   const { user, loading } = useUser();
 
@@ -65,14 +72,30 @@ export default function AppNavigator() {
     );
   }
 
+  if (!user) {
+    return (
+      <NavigationContainer theme={tema}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
   return (
     <NavigationContainer theme={tema}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!user ? (
-          <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
-        ) : (
-          <Stack.Screen name="App" component={AppTabs} />
-        )}
+        <Stack.Screen name="App" component={AppTabs} />
+
+        <Stack.Screen name="Conversacion">
+          {({ route, navigation }) => (
+            <ConversacionScreen
+              conversationId={route.params?.id}
+              onBack={() => navigation.goBack()}
+              onDeleted={() => navigation.goBack()}
+            />
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
