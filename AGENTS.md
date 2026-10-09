@@ -68,9 +68,13 @@ Ejemplo esperado:
 PORT=5000
 DB_URI=tu_uri_de_mongodb
 JWT_SECRET=tu_secreto
+GROQ_API_KEY=tu_clave_de_groq               # voz -> texto (Groq, tier gratuito)
+OPENROUTER_API_KEY=tu_clave_de_openrouter   # traduccion EN -> ES (OpenRouter)
 ```
 
 > **Nota:** `backend/src/config/db.js` lee **`DB_URI`**. Si tu URI se llama `MONGODB_URI`, renómbrala o la conexión no se establece.
+
+> **Nota:** `backend/src/services/translation.js` usa `GROQ_API_KEY` para la transcripción y `OPENROUTER_API_KEY` para la traducción. Sin ellas, `POST /translate` responde `500` con el nombre de la variable que falta. Hay una plantilla en `backend/.env.example`.
 
 ### Frontend
 Crear `frontend/.env` a partir de `frontend/.env.example`.
@@ -147,6 +151,7 @@ Luego escanea el QR con Expo Go (Android/iOS) o presiona `a` / `i` para emulador
   | GET | `/conversations` | `x-device-id` |
   | GET | `/conversations/:id` | `x-device-id` |
   | DELETE | `/conversations/:id` | `x-device-id` |
+  | POST | `/translate` | `x-device-id` (multipart: `audio` + `conversationId`) |
   | POST | `/create-chat` | `x-token` |
   | GET | `/get-chats` | `x-token` |
   | GET | `/get-chat/:id` | `x-token` |
