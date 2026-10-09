@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,22 +7,23 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 
+import { Card } from '../components/ui/Card';
+import { EmptyState, ErrorState, LoadingState } from '../components/ui/StateViews';
 import { getConversations } from '../services/conversationService';
+import { useTheme, globalStyles, typo, css } from '../utils/theme';
 
 const formatDate = (value) => {
   const date = new Date(value);
-  const day = date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
-  const time = date.toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit',
   });
-  return `${day} · ${time}`;
 };
 
 const formatSegments = (conversation) => {
@@ -31,8 +32,8 @@ const formatSegments = (conversation) => {
   return count === 1 ? '1 frase' : `${count} frases`;
 };
 
-// onSelectConversation(conversation) lo conectará la navegación hacia ConversacionScreen.
 export default function HistorialScreen({ onSelectConversation }) {
+  const { colors, space, shadows } = useTheme();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,9 +48,11 @@ export default function HistorialScreen({ onSelectConversation }) {
     }
   }, []);
 
-  useEffect(() => {
-    loadConversations().finally(() => setLoading(false));
-  }, [loadConversations]);
+  useFocusEffect(
+    useCallback(() => {
+      loadConversations().finally(() => setLoading(false));
+    }, [loadConversations])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -57,65 +60,64 @@ export default function HistorialScreen({ onSelectConversation }) {
     setRefreshing(false);
   };
 
-  const handleRetry = async () => {
-    setLoading(true);
-    await loadConversations();
-    setLoading(false);
-  };
-
   const renderItem = ({ item }) => (
     <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && { backgroundColor: colors.tertiarySystemBackground },
+      ]}
       onPress={() => onSelectConversation && onSelectConversation(item)}
+      android_ripple={{ color: colors.tint }}
     >
-      <View style={styles.contenedoresCard}>
-        <Text style={styles.cardDate}>{formatDate(item.startedAt)}</Text>
-        <Text style={styles.cardSegments}>{formatSegments(item)}</Text>
-      </View>
-      <View style={styles.contenedoresCard2}>
-        <Text style={styles.details}> Detalles </Text>
+      <View style={styles.cardContent}>
+        <View style={styles.cardMain}>
+          <Text style={[typo.headline, { color: colors.label }]}>{formatDate(item.startedAt)}</Text>
+          <Text style={[typo.footnote, { color: colors.secondaryLabel, marginTop: 2 }]}>
+            {formatSegments(item)}
+          </Text>
+        </View>
+        <View style={styles.chevron} />
       </View>
     </Pressable>
   );
 
   const renderEmpty = () => {
     if (error) {
-      return (
-        <View style={styles.center}>
-          <Text style={styles.message}>{error}</Text>
-          <Pressable style={styles.retryButton} onPress={handleRetry}>
-            <Text style={styles.retryText}>Reintentar</Text>
-          </Pressable>
-        </View>
-      );
+      return <ErrorState message={error} onRetry={async () => { setLoading(true); await loadConversations(); setLoading(false); }} />;
     }
     return (
-      <View style={styles.center}>
-        <Text style={styles.message}>Aún no tienes conversaciones.</Text>
-        <Text style={styles.hint}>Cuando traduzcas una, aparecerá aquí.</Text>
-      </View>
+      <EmptyState
+        title="Sin conversaciones"
+        description="Cuando traduzcas una, aparecerá aquí."
+      />
     );
   };
 
+  if (loading) {
+    return (
+      <View style={[globalStyles.screenBackground, { backgroundColor: colors.systemBackground }]}>
+        <LoadingState message="Cargando historial…" />
+        <StatusBar barStyle={colors === require('../utils/theme').dark ? 'light-content' : 'dark-content'} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Historial</Text>
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : (
-        <FlatList
-          data={conversations}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          ListEmptyComponent={renderEmpty}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          contentContainerStyle={styles.list}
-        />
-      )}
-      <StatusBar style="auto" />
+    <View style={[styles.container, { backgroundColor: colors.systemBackground }]}>
+      <View style={styles.header}>
+        <Text style={[typo.largeTitle, { color: colors.label }]}>Historial</Text>
+      </View>
+      <FlatList
+        data={conversations}
+        keyExtractor={(item) => item._id}
+        renderItem={renderItem}
+        ListEmptyComponent={renderEmpty}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
+      <StatusBar barStyle={colors.label === '#000000' ? 'dark-content' : 'light-content'} />
     </View>
   );
 }
@@ -123,17 +125,11 @@ export default function HistorialScreen({ onSelectConversation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1117',
     paddingTop: 56,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  header: {
     paddingHorizontal: 20,
-    marginBottom: 12,
-    textAlign: "center",
-    color: "#E8EAF2",
-    marginBottom: 50,
+    marginBottom: 8,
   },
   list: {
     flexGrow: 1,
@@ -141,67 +137,20 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   card: {
-    backgroundColor: '#353944',
-    borderRadius: 25,
-    borderTopLeftRadius: 50,
-    borderBottomLeftRadius: 50,
-    padding: 16,
-    paddingLeft: 30,
-    marginBottom: 10,
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  cardContent: {
     flexDirection: 'row',
-  },
-  cardPressed: {
-    opacity: 0.6,
-  },
-  cardDate: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#E8EAF2'
-  },
-  cardSegments: {
-    fontSize: 14,
-    color: '#9AA3B8',
-    marginTop: 4,
-  },
-  center: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
+    justifyContent: 'space-between',
+    padding: 16,
   },
-  message: {
-    fontSize: 16,
-    textAlign: 'center',
+  cardMain: { flex: 1 },
+  chevron: {
+    width: 24,
+    height: 24,
+    // Se puede poner un ícono SVG aquí
   },
-  hint: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginTop: 6,
-
-  },
-  retryButton: {
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: '#2563eb',
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  details: {
-    color: '#6C8CFF',
-    fontSize: 16,
-  },
-  contenedoresCard: {
-    width: '60%',
-  },
-  contenedoresCard2: {
-    width: '40%',
-    textAlign: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
 });

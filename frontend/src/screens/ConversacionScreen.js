@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -11,28 +10,47 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
 
-import SegmentBubble from '../components/SegmentBubble';
+import { Card, ElevatedCard } from '../components/ui/Card';
+import { ErrorState, LoadingState } from '../components/ui/StateViews';
 import { deleteConversation, getConversation } from '../services/conversationService';
+import { useTheme, globalStyles, typo, css } from '../utils/theme';
 
 const SPEECH_LANGUAGE = 'es-ES';
 
 const formatDate = (value) => {
   const date = new Date(value);
-  const day = date.toLocaleDateString('es-ES', {
+  return date.toLocaleDateString('es-ES', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
-  const time = date.toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit',
   });
-  return `${day} · ${time}`;
 };
 
-// onBack() vuelve al historial; onDeleted() se llama tras borrar la conversación.
-// Ambas las conectará la navegación (AppNavigator).
+const SegmentBubble = ({ segment, onPlay, colors, typo }) => (
+  <ElevatedCard style={styles.bubble}>
+    <Text style={[typo.body, { color: colors.secondaryLabel }]}>{segment.originalText}</Text>
+    <View style={styles.translationRow}>
+      <Text style={[typo.headline, { color: colors.label, flex: 1 }]}>{segment.translatedText}</Text>
+      <Pressable
+        style={({ pressed }) => [
+          styles.playButton,
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={() => onPlay && onPlay(segment)}
+        accessibilityLabel="Reproducir traducción"
+        android_ripple={{ color: colors.tint }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={styles.playText}>▶</Text>
+      </Pressable>
+    </View>
+  </ElevatedCard>
+);
+
 export default function ConversacionScreen({ conversationId, onBack, onDeleted }) {
+  const { colors, space, shadows, typo: typoScale } = useTheme();
   const [conversation, setConversation] = useState(null);
   const [segments, setSegments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +71,6 @@ export default function ConversacionScreen({ conversationId, onBack, onDeleted }
   useEffect(() => {
     setLoading(true);
     loadConversation().finally(() => setLoading(false));
-    // Al salir de la pantalla se corta cualquier voz en curso.
     return () => Speech.stop();
   }, [loadConversation]);
 
@@ -87,11 +104,11 @@ export default function ConversacionScreen({ conversationId, onBack, onDeleted }
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <Pressable onPress={onBack} hitSlop={12}>
-        <Text style={styles.backText}>‹ Historial</Text>
+    <View style={[styles.header, { paddingHorizontal: space[4] }]}>
+      <Pressable onPress={onBack} hitSlop={12} android_ripple={{ color: colors.tint }}>
+        <Text style={[typoScale.callout, { color: colors.tint }]}>‹ Historial</Text>
       </Pressable>
-      <Text style={styles.title}>
+      <Text style={[typoScale.title2, { color: colors.label, marginTop: space[1] }]}>
         {conversation ? formatDate(conversation.startedAt) : 'Conversación'}
       </Text>
     </View>
@@ -99,59 +116,56 @@ export default function ConversacionScreen({ conversationId, onBack, onDeleted }
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.headerPadding}>{renderHeader()}</View>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-        </View>
+      <View style={[globalStyles.screenBackground, { backgroundColor: colors.systemBackground }]}>
+        {renderHeader()}
+        <LoadingState message="Cargando conversación…" />
+        <StatusBar barStyle={colors.label === '#000000' ? 'dark-content' : 'light-content'} />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
-        <View style={styles.headerPadding}>{renderHeader()}</View>
-        <View style={styles.center}>
-          <Text style={styles.message}>{error}</Text>
-          <Pressable
-            style={styles.retryButton}
-            onPress={() => {
-              setLoading(true);
-              loadConversation().finally(() => setLoading(false));
-            }}
-          >
-            <Text style={styles.retryText}>Reintentar</Text>
-          </Pressable>
-        </View>
+      <View style={[globalStyles.screenBackground, { backgroundColor: colors.systemBackground }]}>
+        {renderHeader()}
+        <ErrorState message={error} onRetry={() => { setLoading(true); loadConversation().finally(() => setLoading(false)); }} />
+        <StatusBar barStyle={colors.label === '#000000' ? 'dark-content' : 'light-content'} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.systemBackground }]}>
       <FlatList
         data={segments}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <SegmentBubble segment={item} onPlay={handlePlay} />}
+        renderItem={({ item }) => (
+          <SegmentBubble segment={item} onPlay={handlePlay} colors={colors} typo={typoScale} />
+        )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={
-          <View style={styles.center}>
-            <Text style={styles.message}>Esta conversación no tiene frases.</Text>
+          <View style={[globalStyles.center, { padding: space[6] }]}>
+            <Text style={[typoScale.body, { color: colors.tertiaryLabel }]}>Esta conversación no tiene frases.</Text>
           </View>
         }
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
       />
       <Pressable
-        style={[styles.deleteButton, deleting && styles.deleteDisabled]}
+        style={[
+          styles.deleteButton,
+          { backgroundColor: colors.systemRed, borderRadius: 16 },
+          deleting && { opacity: 0.5 },
+        ]}
         onPress={handleDelete}
         disabled={deleting}
+        android_ripple={{ color: colors.systemRedPressed }}
       >
-        <Text style={styles.deleteText}>
-          {deleting ? 'Borrando...' : 'Borrar conversación'}
+        <Text style={[typoScale.callout, { fontWeight: '600', color: colors.systemBackground }]}>
+          {deleting ? 'Borrando…' : 'Borrar conversación'}
         </Text>
       </Pressable>
-      <StatusBar style="auto" />
+      <StatusBar barStyle={colors.label === '#000000' ? 'dark-content' : 'light-content'} />
     </View>
   );
 }
@@ -159,64 +173,42 @@ export default function ConversacionScreen({ conversationId, onBack, onDeleted }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     paddingTop: 56,
   },
   header: {
-    marginBottom: 16,
-  },
-  headerPadding: {
-    paddingHorizontal: 16,
-  },
-  backText: {
-    fontSize: 16,
-    color: '#2563eb',
     marginBottom: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
   },
   list: {
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
-  center: {
-    flex: 1,
+  bubble: {
+    marginBottom: 12,
+  },
+  translationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  playButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF', // Se sobreescribe con theme en el componente
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    marginLeft: 12,
   },
-  message: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: '#2563eb',
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: '600',
+  playText: {
+    color: '#FFFFFF',
+    fontSize: 14,
   },
   deleteButton: {
     marginHorizontal: 16,
     marginBottom: 32,
-    paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: '#fee2e2',
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
-  },
-  deleteDisabled: {
-    opacity: 0.5,
-  },
-  deleteText: {
-    color: '#b91c1c',
-    fontWeight: '600',
-    fontSize: 16,
   },
 });

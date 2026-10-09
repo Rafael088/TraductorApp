@@ -1,7 +1,6 @@
 import api from './api';
 
-// La identidad del dispositivo viaja sola: el interceptor de services/api.js
-// añade el encabezado x-device-id a todas las peticiones.
+// El header x-device-id lo agrega el interceptor de api.js.
 
 // GET /conversations -> { ok, conversations } (la más reciente primero)
 export async function getConversations() {

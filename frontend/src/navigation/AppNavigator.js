@@ -43,11 +43,11 @@ function AppTabs() {
         )}
       </Tab.Screen>
 
-      <Tab.Screen name="Historial">
+      <Tab.Screen name="Historial" options={{ headerShown: false }}>
         {({ navigation }) => (
           <HistorialScreen
             onSelectConversation={(conversation) =>
-              navigation.navigate('Conversacion', { id: conversation._id })
+              navigation.navigate('Conversacion', { conversationId: conversation._id })
             }
           />
         )}
@@ -85,17 +85,22 @@ export default function AppNavigator() {
   return (
     <NavigationContainer theme={tema}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="App" component={AppTabs} />
-
-        <Stack.Screen name="Conversacion">
-          {({ route, navigation }) => (
-            <ConversacionScreen
-              conversationId={route.params?.id}
-              onBack={() => navigation.goBack()}
-              onDeleted={() => navigation.goBack()}
-            />
-          )}
-        </Stack.Screen>
+        {!user ? (
+          <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
+        ) : (
+          <>
+            <Stack.Screen name="App" component={AppTabs} />
+            <Stack.Screen name="Conversacion">
+              {({ navigation, route }) => (
+                <ConversacionScreen
+                  conversationId={route.params.conversationId}
+                  onBack={navigation.goBack}
+                  onDeleted={navigation.goBack}
+                />
+              )}
+            </Stack.Screen>
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
