@@ -2,13 +2,13 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Proximamente from '../components/Proximamente';
 import { useUser } from '../context/UserContext';
 import {
   AjustesScreen,
   BienvenidaScreen,
   ConversacionScreen,
   HistorialScreen,
+  TraducirScreen,
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -23,8 +23,7 @@ const tema = {
   },
 };
 
-// Las tres pestañas (ARQUITECTURA.md §5). Traducir e Historial son de otros
-// bloques, así que esperan con un relleno hasta que lleguen sus pantallas.
+// Las tres pestañas (ARQUITECTURA.md §5).
 function AppTabs() {
   return (
     <Tab.Navigator
@@ -34,14 +33,7 @@ function AppTabs() {
         headerTitleStyle: { fontWeight: '700' },
       }}
     >
-      <Tab.Screen name="Traducir">
-        {() => (
-          <Proximamente
-            titulo="Traducir"
-            descripcion="La traducción en vivo llega en la próxima tarea."
-          />
-        )}
-      </Tab.Screen>
+      <Tab.Screen name="Traducir" component={TraducirScreen} />
 
       <Tab.Screen name="Historial">
         {({ navigation }) => (
