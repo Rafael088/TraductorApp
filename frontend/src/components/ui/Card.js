@@ -5,7 +5,7 @@ import { useTheme, globalStyles, css } from '../../utils/theme';
  * Card estándar estilo Apple
  * Uso: <Card style={extraStyles}>contenido</Card>
  */
-export default function Card({ children, style, ...props }) {
+export function Card({ children, style, ...props }) {
   const { colors, shadows, radius, space } = useTheme();
   const base = [
     globalStyles.card,
