@@ -4,8 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
+  TextInput,  
   View,
 } from 'react-native';
 import { useUser } from '../context/UserContext';
@@ -13,9 +12,16 @@ import { updateMe } from '../services/userService';
 import { SOURCE_LANG, TARGET_LANG, languageLabel } from '../utils/languages';
 import { VELOCIDAD_VOCES, getVelocidadVoz, setVelocidadVoz } from '../utils/preferences';
 
+import { Card } from '../components/ui/Card';
+import { PrimaryButton, SecondaryButton } from '../components/ui/Button';
+import { ErrorState } from '../components/ui/StateViews';
+import { SectionHeader, ScreenTitle } from '../components/ui/Typography';
+import { useTheme, globalStyles, typo, css } from '../utils/theme';
+
 const MAX_NAME_LENGTH = 30;
 
 export default function AjustesScreen() {
+  const { colors, space, shadows } = useTheme();
   const { user, updateUser } = useUser();
 
   const [name, setName] = useState(user?.name || '');
@@ -24,7 +30,6 @@ export default function AjustesScreen() {
   const [saved, setSaved] = useState(false);
   const [velocidad, setVelocidad] = useState(null);
 
-  // Si el perfil se refresca en segundo plano (GET /me), seguimos su valor.
   useEffect(() => {
     if (user?.name) setName(user.name);
   }, [user?.name]);
@@ -47,16 +52,11 @@ export default function AjustesScreen() {
 
     try {
       const actualizado = await updateMe(limpio);
-
       await updateUser(actualizado);
       setSaved(true);
     } catch (err) {
       console.error('Error al guardar el nombre:', err);
-
-      setError(
-        err?.response?.data?.msg ||
-          'No se pudo guardar. Revisa que el servidor esté corriendo.'
-      );
+      setError(err?.response?.data?.msg || 'No se pudo guardar. Revisa que el servidor esté corriendo.');
       setName(user?.name || '');
     } finally {
       setSaving(false);
@@ -65,7 +65,6 @@ export default function AjustesScreen() {
 
   async function handleVelocidad(valor) {
     setVelocidad(valor);
-
     try {
       await setVelocidadVoz(valor);
     } catch (err) {
@@ -76,14 +75,23 @@ export default function AjustesScreen() {
   const sinCambios = name.trim() === (user?.name || '').trim();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.hola}>Hola, {user?.name || '...'} 👋</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.systemBackground }]}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.greeting, { paddingHorizontal: space[4] }]}>
+        <ScreenTitle>Hola, {user?.name || '...'} 👋</ScreenTitle>
+      </View>
 
       {/* --- Tu nombre --- */}
-      <Text style={styles.seccion}>Tu nombre</Text>
-      <View style={styles.card}>
+      <SectionHeader title="Tu nombre" />
+      <Card style={[styles.card, { marginHorizontal: space[4], marginTop: space[2] }]}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            { backgroundColor: colors.tertiarySystemBackground, borderColor: colors.separator, color: colors.label },
+          ]}
           value={name}
           onChangeText={(texto) => {
             setName(texto);
@@ -91,218 +99,117 @@ export default function AjustesScreen() {
             setSaved(false);
           }}
           placeholder="Tu nombre"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.tertiaryLabel}
           autoCapitalize="words"
           autoCorrect={false}
           maxLength={MAX_NAME_LENGTH}
           editable={!saving}
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {saved && !error ? <Text style={styles.ok}>Nombre guardado ✓</Text> : null}
+        {error && <ErrorState message={error} style={styles.errorInline} />}
+        {saved && !error && (
+          <Text style={[typo.footnote, { color: colors.systemGreen, marginTop: space[2] }]}>Nombre guardado ✓</Text>
+        )}
 
-        <TouchableOpacity
-          style={[styles.button, (saving || sinCambios) && styles.buttonDisabled]}
+        <PrimaryButton
           onPress={handleGuardar}
           disabled={saving || sinCambios}
-          activeOpacity={0.8}
+          loading={saving}
+          style={styles.primaryButton}
         >
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Guardar</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          Guardar
+        </PrimaryButton>
+      </Card>
 
       {/* --- Idiomas --- */}
-      <Text style={styles.seccion}>Idiomas</Text>
-      <View style={styles.card}>
-        <View style={styles.fila}>
+      <SectionHeader title="Idiomas" />
+      <Card style={[styles.card, { marginHorizontal: space[4], marginTop: space[2] }]}>
+        <View style={styles.languageRow}>
           <View>
-            <Text style={styles.filaLabel}>Oigo</Text>
-            <Text style={styles.filaValor}>{languageLabel(SOURCE_LANG)}</Text>
+            <Text style={[typo.caption1, { color: colors.tertiaryLabel }]}>Oigo</Text>
+            <Text style={[typo.body, { color: colors.label, fontWeight: '600' }]}>{languageLabel(SOURCE_LANG)}</Text>
           </View>
-          <Text style={styles.candado}>🔒</Text>
+          <Text style={{ fontSize: 20 }}>🔒</Text>
         </View>
 
-        <View style={styles.separador} />
+        <View style={[styles.hairline, { backgroundColor: colors.separator, marginVertical: space[2] }]} />
 
-        <View style={styles.fila}>
+        <View style={styles.languageRow}>
           <View>
-            <Text style={styles.filaLabel}>Hablo</Text>
-            <Text style={styles.filaValor}>{languageLabel(TARGET_LANG)}</Text>
+            <Text style={[typo.caption1, { color: colors.tertiaryLabel }]}>Hablo</Text>
+            <Text style={[typo.body, { color: colors.label, fontWeight: '600' }]}>{languageLabel(TARGET_LANG)}</Text>
           </View>
-          <Text style={styles.candado}>🔒</Text>
+          <Text style={{ fontSize: 20 }}>🔒</Text>
         </View>
 
-        <Text style={styles.nota}>Por ahora los idiomas están fijos.</Text>
-      </View>
+        <Text style={[typo.caption1, { color: colors.tertiaryLabel, marginTop: space[3] }]}>Por ahora los idiomas están fijos.</Text>
+      </Card>
 
       {/* --- Voz --- */}
-      <Text style={styles.seccion}>Velocidad de voz</Text>
-      <View style={styles.card}>
-        <View style={styles.opciones}>
+      <SectionHeader title="Velocidad de voz" />
+      <Card style={[styles.card, { marginHorizontal: space[4], marginTop: space[2] }]}>
+        <View style={styles.speedOptions}>
           {VELOCIDAD_VOCES.map((opcion) => {
             const activa = velocidad === opcion.valor;
-
             return (
-              <TouchableOpacity
+              <SecondaryButton
                 key={opcion.valor}
-                style={[styles.opcion, activa && styles.opcionActiva]}
                 onPress={() => handleVelocidad(opcion.valor)}
-                activeOpacity={0.8}
+                disabled={activa}
+                textColor={activa ? colors.systemBackground : undefined}
+                style={[
+                  styles.speedOption,
+                  { backgroundColor: activa ? colors.tint : 'transparent', borderColor: activa ? colors.tint : colors.separator },
+                ]}
               >
-                <Text style={[styles.opcionTexto, activa && styles.opcionTextoActiva]}>
-                  {opcion.etiqueta}
-                </Text>
-              </TouchableOpacity>
+                {opcion.etiqueta}
+              </SecondaryButton>
             );
           })}
         </View>
-        <Text style={styles.nota}>Afecta a la voz en español de la traducción.</Text>
-      </View>
+        <Text style={[typo.caption1, { color: colors.tertiaryLabel, marginTop: space[3] }]}>Afecta a la voz en español de la traducción.</Text>
+      </Card>
 
       {/* --- Dispositivo --- */}
-      <Text style={styles.seccion}>Dispositivo</Text>
-      <View style={styles.card}>
-        <Text style={styles.dispositivo}>
+      <SectionHeader title="Dispositivo" />
+      <Card style={[styles.card, { marginHorizontal: space[4], marginTop: space[2], marginBottom: space[6] }]}>
+        <Text style={[typo.callout, { color: colors.label, fontWeight: '600', fontVariant: ['tabular-nums'] }]}>
           {user?.deviceId ? String(user.deviceId).slice(0, 8) + '••••' : '—'}
         </Text>
-        <Text style={styles.nota}>
+        <Text style={[typo.caption1, { color: colors.tertiaryLabel, marginTop: space[2] }]}>
           TraduFly reconoce este teléfono por esa clave. No hay correo ni contraseña.
         </Text>
-      </View>
+      </Card>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#d4d8dd',
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  hola: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  seccion: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#27282a',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginTop: 20,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  card: {
-    backgroundColor: '#92a197',
-    borderRadius: 16,
-    padding: 16,
-  },
+  container: { flex: 1 },
+  content: { paddingBottom: 40 },
+  greeting: { marginTop: 8, marginBottom: 4 },
+  card: { padding: 20 },
   input: {
-    borderWidth: 1,
-    borderColor: '#161517',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#0d0d0e',
-    backgroundColor: '#93c4f5',
-  },
-  error: {
-    color: '#dc2626',
-    fontSize: 14,
-    marginTop: 10,
-  },
-  ok: {
-    color: '#16a34a',
-    fontSize: 14,
-    marginTop: 10,
-    fontWeight: '600',
-  },
-  button: {
-    backgroundColor: '#eb254d',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 14,
+    fontSize: 17,
   },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  fila: {
+  errorInline: { marginTop: 10 },
+  primaryButton: { marginTop: 16, width: '100%' },
+  languageRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 6,
   },
-  filaLabel: {
-    fontSize: 13,
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  filaValor: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  candado: {
-    fontSize: 18,
-    opacity: 0.6,
-  },
-  separador: {
-    height: 1,
-    backgroundColor: '#e2e8f0',
-    marginVertical: 10,
-  },
-  opciones: {
+  hairline: { height: StyleSheet.hairlineWidth },
+  speedOptions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+    marginTop: 4,
   },
-  opcion: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  opcionActiva: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-  },
-  opcionTexto: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  opcionTextoActiva: {
-    color: '#fff',
-  },
-  nota: {
-    fontSize: 13,
-    color: '#94a3b8',
-    marginTop: 12,
-    lineHeight: 18,
-  },
-  dispositivo: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#334155',
-    fontVariant: ['tabular-nums'],
-  },
+  speedOption: { flex: 1, minWidth: 80 },
 });

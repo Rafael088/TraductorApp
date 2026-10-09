@@ -1,38 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useTheme, globalStyles, typo } from '../utils/theme';
 
-// Pantalla de relleno para los bloques que aún no están (Traducir, Historial).
 export default function Proximamente({ titulo, descripcion }) {
+  const { colors, space } = useTheme();
   return (
-    <View style={styles.container}>
-      <Text style={styles.emoji}>🚧</Text>
-      <Text style={styles.titulo}>{titulo}</Text>
-      <Text style={styles.descripcion}>{descripcion}</Text>
+    <View style={[globalStyles.center, { backgroundColor: colors.systemBackground, padding: space[6] }]}>
+      <Text style={[typo.largeTitle, { color: colors.tertiaryLabel }]}>🚧</Text>
+      <Text style={[typo.title2, { color: colors.label, marginTop: space[3] }]}>{titulo}</Text>
+      <Text style={[typo.body, { color: colors.secondaryLabel, marginTop: space[2], textAlign: 'center', lineHeight: 22 }]}>
+        {descripcion}
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  emoji: {
-    fontSize: 44,
-    marginBottom: 16,
-  },
-  titulo: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 8,
-  },
-  descripcion: {
-    fontSize: 15,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-});
