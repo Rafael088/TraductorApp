@@ -39,7 +39,7 @@ function AppTabs() {
         {({ navigation }) => (
           <HistorialScreen
             onSelectConversation={(conversation) =>
-              navigation.navigate('Conversacion', { conversationId: conversation._id })
+              navigation.navigate('Conversacion', { id: conversation._id })
             }
           />
         )}
