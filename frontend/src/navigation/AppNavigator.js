@@ -60,6 +60,7 @@ function AppTabs() {
 
 // Decide qué se ve según el usuario (ARQUITECTURA.md §5):
 // sin usuario → Bienvenida. Con usuario → las tres pestañas.
+// El detalle (ConversacionScreen) vive en el stack raíz, fuera de las pestañas.
 export default function AppNavigator() {
   const { user, loading } = useUser();
 
@@ -68,6 +69,16 @@ export default function AppNavigator() {
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <NavigationContainer theme={tema}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
     );
   }
 
