@@ -1,12 +1,13 @@
 import app from './app.js';
+import { dbConnect } from './config/db.js';
+
 const port = process.env.PORT || 5000;
 
 async function main(){
 
     try {
 
-        // Sin conexión a base de datos por ahora (ver ARQUITECTURA.md).
-
+        await dbConnect();
 
         app.get('/home', (req, res) => res.send('Hola Mundo desde send') );
 
