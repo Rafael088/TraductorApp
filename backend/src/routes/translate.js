@@ -34,6 +34,19 @@ const uploadAudio = (req, res, next) => {
 };
 
 // POST /translate — audio (multipart, campo "audio") + conversationId.
-router.post("/translate", identifyDevice, uploadAudio, cTranslate);
+// El console.log es diagnóstico: tamaño del audio recibido del teléfono.
+router.post(
+    "/translate",
+    identifyDevice,
+    uploadAudio,
+    (req, res, next) => {
+        console.log(
+            `[translate] audio=${req.file?.size ?? 0}B format=${req.body?.format ?? "-"} ` +
+                `mimetype=${req.file?.mimetype ?? "-"} conversationId=${req.body?.conversationId ?? "-"}`
+        );
+        next();
+    },
+    cTranslate
+);
 
 export default router;
