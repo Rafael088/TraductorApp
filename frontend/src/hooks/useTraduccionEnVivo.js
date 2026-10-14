@@ -21,12 +21,39 @@ const SONDEO_METRO_MS = 150;
 const ESPERA_TRAS_FALLO_MS = 500; // evita un bucle cerrado si falla el micrófono
 const TIEMPO_HABLA_MAXIMO_MS = 20000; // por si la voz del sistema no avisa al terminar
 
+// Reintento de la frase (ARQUITECTURA.md §3): un fallo transitorio de red o el
+// límite gratuito de Groq (20 req/min) no deben cerrar la sesión ni perder la
+// frase que acaba de decirse.
+const REINTENTOS_FRASE = 2; // intentos extra además del primero
+const ESPERA_REINTENTO_BASE_MS = 1200;
+const ESPERA_MAXIMA_REINTENTO_MS = 20000;
+
 const OPCIONES_GRABACION = {
   ...RecordingPresets.HIGH_QUALITY,
   isMeteringEnabled: true, // sin esto getStatus().metering viene vacío
 };
 
 const esperar = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
+
+// Un fallo transitorio no debe matar la sesión: la frase se reintenta. Corta
+// solo lo que no se recupera solo (clave inválida, audio rechazado, 4xx…).
+function esErrorTransitorio(err) {
+  if (!err?.response) return true; // sin respuesta: red caída o timeout
+  const status = err.response.status;
+  return status === 429 || status >= 500;
+}
+
+// Espera antes de reintentar: Groq avisa en Retry-After (segundos) cuánto falta
+// para liberar su límite; si no, backoff creciente.
+function esperaDeReintento(err, intento) {
+  const retryAfter = Number(err?.response?.headers?.['retry-after']);
+
+  if (Number.isFinite(retryAfter) && retryAfter > 0) {
+    return Math.min(retryAfter * 1000, ESPERA_MAXIMA_REINTENTO_MS);
+  }
+
+  return ESPERA_REINTENTO_BASE_MS * (intento + 1);
+}
 
 // Ciclo en vivo por fragmentos: escuchar → enviar → hablar → escuchar… (§3).
 // Máquina de estados: idle → listening → sending → speaking → idle (Detener).
@@ -207,13 +234,39 @@ export default function useTraduccionEnVivo() {
 
       setEstado('sending');
 
-      let fragmento;
-      try {
-        fragmento = await translateSegment(conversationIdRef.current, ruta);
-      } catch (err) {
-        await finalizar(mensajeDeError(err));
-        break;
+      let fragmento = null;
+
+      // Traduce la frase con reintentos: lo transitorio (red, límite de Groq)
+      // espera y reintenta; lo definitivo corta la sesión con el mensaje.
+      for (let intento = 0; intento <= REINTENTOS_FRASE; intento += 1) {
+        try {
+          fragmento = await translateSegment(conversationIdRef.current, ruta);
+          break;
+        } catch (err) {
+          if (!activoRef.current) break; // Detener durante la espera
+
+          if (esErrorTransitorio(err) && intento < REINTENTOS_FRASE) {
+            const esLimite = err?.response?.status === 429;
+
+            setError(
+              esLimite
+                ? 'Demasiadas peticiones seguidas: esperando y reintentando…'
+                : 'Problema de conexión: reintentando la frase…'
+            );
+
+            await esperar(esperaDeReintento(err, intento));
+            continue;
+          }
+
+          await finalizar(mensajeDeError(err));
+          break;
+        }
       }
+
+      if (!activoRef.current) break;
+      if (!fragmento) break; // la sesión se cortó desde finalizar
+
+      setError(null); // la frase llegó: retira el aviso de reintento
 
       if (fragmento.originalText) {
         setSegmentos((anteriores) => [...anteriores, fragmento]);
