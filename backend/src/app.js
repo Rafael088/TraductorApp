@@ -6,6 +6,7 @@ import users from './routes/users.js';
 import chats from './routes/chats.js';
 import conversations from './routes/conversations.js';
 import translate from './routes/translate.js';
+import products from './routes/products.js';
 
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use(users)
 app.use(chats)
 app.use(conversations)
 app.use(translate)
+app.use(products)
 
 
 export default app
