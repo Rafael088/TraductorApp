@@ -28,6 +28,11 @@ const REINTENTOS_FRASE = 2; // intentos extra además del primero
 const ESPERA_REINTENTO_BASE_MS = 1200;
 const ESPERA_MAXIMA_REINTENTO_MS = 20000;
 
+// Cuando el dispositivo no reporta el nivel de voz (metering opcional en
+// expo-audio), no se puede cortar por pausa: el fragmento se corta por duración
+// y se manda entero; si era silencio, el backend responde empty y no guarda.
+const DURACION_MINIMA_AUDIO_MS = 800; // no enviar fragmentos minúsculos
+
 const OPCIONES_GRABACION = {
   ...RecordingPresets.HIGH_QUALITY,
   isMeteringEnabled: true, // sin esto getStatus().metering viene vacío
@@ -73,6 +78,7 @@ export default function useTraduccionEnVivo() {
   const conversationIdRef = useRef(null);
   const velocidadRef = useRef(1);
   const finHablaRef = useRef(null);
+  const advertidoNivelRef = useRef(false); // avisa una vez por sesión si no hay metering
 
   function mensajeDeError(err) {
     if (!err?.response) {
@@ -146,6 +152,8 @@ export default function useTraduccionEnVivo() {
 
   // Graba hasta detectar la pausa de una frase. Resuelve con la ruta del
   // fragmento o null si no hubo voz (el silencio no se manda al servidor).
+  // Si el dispositivo no reporta el nivel de voz, se corta por duración y se
+  // manda entero: el backend es quien decide si había voz.
   function grabarFragmento() {
     return new Promise((resolverFragmento) => {
       let cerrada = false;
@@ -179,6 +187,7 @@ export default function useTraduccionEnVivo() {
           const inicio = Date.now();
           let huboVoz = false;
           let ultimoVoz = inicio;
+          let hayNivel = false; // ¿este dispositivo reporta el nivel de voz?
 
           intervalo = setInterval(async () => {
             try {
@@ -191,21 +200,43 @@ export default function useTraduccionEnVivo() {
               const nivel =
                 typeof estadoGrabacion.metering === 'number'
                   ? estadoGrabacion.metering
-                  : -160; // sin medición se toma como silencio
+                  : null; // null: el dispositivo no reporta el nivel
 
-              if (nivel > UMBRAL_SILENCIO_DB) {
-                huboVoz = true;
-                ultimoVoz = ahora;
+              if (nivel !== null) {
+                hayNivel = true;
+
+                if (nivel > UMBRAL_SILENCIO_DB) {
+                  huboVoz = true;
+                  ultimoVoz = ahora;
+                }
+              } else if (!hayNivel && !advertidoNivelRef.current) {
+                // Diagnóstico (una vez por sesión): en algunos teléfonos
+                // getStatus() no trae metering y, sin este aviso, el audio se
+                // descartaba en silencio como si siempre fuera silencio.
+                advertidoNivelRef.current = true;
+                console.warn(
+                  '[TraduFly] El dispositivo no reporta el nivel de voz (metering).',
+                  'Estado del grabador:',
+                  JSON.stringify(estadoGrabacion)
+                );
               }
 
               const duracion = ahora - inicio;
               const pausa = ahora - ultimoVoz;
+
+              // Sin nivel no hay pausa que detectar: se corta por duración.
               const finDeFrase =
                 duracion >= DURACION_MAXIMA_MS ||
-                (huboVoz && pausa >= PAUSA_FIN_FRASE_MS);
+                (hayNivel && huboVoz && pausa >= PAUSA_FIN_FRASE_MS);
 
               if (finDeFrase) {
-                await cerrar(huboVoz ? recorder.uri : null);
+                // Con nivel se manda solo si hubo voz medida. Sin nivel se
+                // manda entero: si era silencio, el backend responde empty.
+                const hayAudio = hayNivel
+                  ? huboVoz
+                  : duracion >= DURACION_MINIMA_AUDIO_MS;
+
+                await cerrar(hayAudio ? recorder.uri : null);
               }
             } catch (err) {
               console.warn('No se pudo medir el fragmento:', err?.message);
@@ -291,6 +322,7 @@ export default function useTraduccionEnVivo() {
     iniciandoRef.current = true;
     setIniciando(true);
     setError(null);
+    advertidoNivelRef.current = false; // vuelve a poder avisar sobre metering
 
     try {
       const permiso = await requestRecordingPermissionsAsync();
