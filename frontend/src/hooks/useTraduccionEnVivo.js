@@ -270,6 +270,10 @@ export default function useTraduccionEnVivo() {
 
       if (fragmento.originalText) {
         setSegmentos((anteriores) => [...anteriores, fragmento]);
+      } else if (fragmento.empty) {
+        // El servidor no encontró voz en el fragmento y no guardó nada. Sin
+        // este aviso parece que la frase se perdió sin explicación.
+        setError('No se detectó voz en esa frase: no se guardó nada.');
       }
 
       if (!activoRef.current) break;
