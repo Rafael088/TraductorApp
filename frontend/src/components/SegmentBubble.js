@@ -1,36 +1,46 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { ElevatedCard } from './ui/Card';
+import { useTheme, typo as typoScale } from '../utils/theme';
+
 // Una frase de la conversación: texto original arriba y su traducción abajo.
 // onPlay(segment) vuelve a decir la traducción en voz alta.
-export default function SegmentBubble({ segment, onPlay }) {
+// La usan TraducirScreen (en vivo) y ConversacionScreen (historial);
+// el tema (colores/tipografía) se aplica solo según el modo claro/oscuro.
+export default function SegmentBubble({ segment, onPlay, style }) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.original}>{segment.originalText}</Text>
+    <ElevatedCard style={style}>
+      <Text style={[typoScale.body, { color: colors.secondaryLabel }]}>
+        {segment.originalText}
+      </Text>
       <View style={styles.translationRow}>
-        <Text style={styles.translated}>{segment.translatedText}</Text>
+        <Text
+          style={[typoScale.headline, styles.translated, { color: colors.label }]}
+          numberOfLines={0}
+        >
+          {segment.translatedText}
+        </Text>
         <Pressable
-          style={({ pressed }) => [styles.playButton, pressed && styles.playPressed]}
+          style={({ pressed }) => [
+            styles.playButton,
+            { backgroundColor: colors.tint },
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={() => onPlay && onPlay(segment)}
           accessibilityLabel="Reproducir traducción"
+          android_ripple={{ color: '#FFFFFF66' }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={styles.playText}>▶</Text>
         </Pressable>
       </View>
-    </View>
+    </ElevatedCard>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  original: {
-    fontSize: 15,
-    color: '#6b7280',
-  },
   translationRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -38,23 +48,17 @@ const styles = StyleSheet.create({
   },
   translated: {
     flex: 1,
-    fontSize: 17,
-    fontWeight: '600',
   },
   playButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2563eb',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
   },
-  playPressed: {
-    opacity: 0.6,
-  },
   playText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 14,
   },
 });

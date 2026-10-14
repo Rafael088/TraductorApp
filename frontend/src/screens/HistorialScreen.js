@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -10,10 +9,9 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 
-import { Card } from '../components/ui/Card';
 import { EmptyState, ErrorState, LoadingState } from '../components/ui/StateViews';
 import { getConversations } from '../services/conversationService';
-import { useTheme, globalStyles, typo, css } from '../utils/theme';
+import { useTheme, globalStyles, typo } from '../utils/theme';
 
 const formatDate = (value) => {
   const date = new Date(value);
@@ -44,7 +42,10 @@ export default function HistorialScreen({ onSelectConversation }) {
       setError(null);
       setConversations(await getConversations());
     } catch (err) {
-      setError('No se pudo cargar el historial.');
+      console.warn('Error al cargar el historial:', err?.message);
+      setError(
+        `No se pudo cargar el historial.${err?.message ? ` (${err.message})` : ''}`
+      );
     }
   }, []);
 
@@ -76,7 +77,9 @@ export default function HistorialScreen({ onSelectConversation }) {
             {formatSegments(item)}
           </Text>
         </View>
-        <View style={styles.chevron} />
+        <View style={styles.chevron}>
+          <Text style={[styles.chevronText, { color: colors.tertiaryLabel }]}>›</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -97,7 +100,7 @@ export default function HistorialScreen({ onSelectConversation }) {
     return (
       <View style={[globalStyles.screenBackground, { backgroundColor: colors.systemBackground }]}>
         <LoadingState message="Cargando historial…" />
-        <StatusBar barStyle={colors === require('../utils/theme').dark ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle={colors.label === '#000000' ? 'dark-content' : 'light-content'} />
       </View>
     );
   }
@@ -151,6 +154,11 @@ const styles = StyleSheet.create({
   chevron: {
     width: 24,
     height: 24,
-    // Se puede poner un ícono SVG aquí
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronText: {
+    fontSize: 24,
+    fontWeight: '600',
   },
 });

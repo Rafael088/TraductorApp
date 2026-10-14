@@ -10,10 +10,10 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
 
-import { Card, ElevatedCard } from '../components/ui/Card';
 import { ErrorState, LoadingState } from '../components/ui/StateViews';
+import SegmentBubble from '../components/SegmentBubble';
 import { deleteConversation, getConversation } from '../services/conversationService';
-import { useTheme, globalStyles, typo, css } from '../utils/theme';
+import { useTheme, globalStyles } from '../utils/theme';
 
 const SPEECH_LANGUAGE = 'es-ES';
 
@@ -27,27 +27,6 @@ const formatDate = (value) => {
     minute: '2-digit',
   });
 };
-
-const SegmentBubble = ({ segment, onPlay, colors, typo }) => (
-  <ElevatedCard style={styles.bubble}>
-    <Text style={[typo.body, { color: colors.secondaryLabel }]}>{segment.originalText}</Text>
-    <View style={styles.translationRow}>
-      <Text style={[typo.headline, { color: colors.label, flex: 1 }]}>{segment.translatedText}</Text>
-      <Pressable
-        style={({ pressed }) => [
-          styles.playButton,
-          pressed && { opacity: 0.7 },
-        ]}
-        onPress={() => onPlay && onPlay(segment)}
-        accessibilityLabel="Reproducir traducción"
-        android_ripple={{ color: colors.tint }}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Text style={styles.playText}>▶</Text>
-      </Pressable>
-    </View>
-  </ElevatedCard>
-);
 
 export default function ConversacionScreen({ conversationId, onBack, onDeleted }) {
   const { colors, space, shadows, typo: typoScale } = useTheme();
@@ -64,7 +43,10 @@ export default function ConversacionScreen({ conversationId, onBack, onDeleted }
       setConversation(data.conversation);
       setSegments(data.segments);
     } catch (err) {
-      setError('No se pudo cargar la conversación.');
+      console.warn('Error al cargar la conversación:', err?.message);
+      setError(
+        `No se pudo cargar la conversación.${err?.message ? ` (${err.message})` : ''}`
+      );
     }
   }, [conversationId]);
 
@@ -140,7 +122,7 @@ export default function ConversacionScreen({ conversationId, onBack, onDeleted }
         data={segments}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          <SegmentBubble segment={item} onPlay={handlePlay} colors={colors} typo={typoScale} />
+          <SegmentBubble segment={item} onPlay={handlePlay} style={styles.bubble} />
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={
@@ -185,24 +167,6 @@ const styles = StyleSheet.create({
   },
   bubble: {
     marginBottom: 12,
-  },
-  translationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  playButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#007AFF', // Se sobreescribe con theme en el componente
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
-  },
-  playText: {
-    color: '#FFFFFF',
-    fontSize: 14,
   },
   deleteButton: {
     marginHorizontal: 16,
