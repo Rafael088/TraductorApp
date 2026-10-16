@@ -37,6 +37,10 @@ export async function translateSegment(conversationId, uri) {
     transformRequest: (form) => form, // evita que axios serialice el FormData
   });
 
+  // Antes del return:
+  console.log('📤 Enviando:', { conversationId, format, uri });
+  console.log('📥 Respuesta:', data);
+  
   return {
     originalText: data?.originalText || '',
     translatedText: data?.translatedText || '',

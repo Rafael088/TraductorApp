@@ -78,11 +78,27 @@ export async function cTranslate(req, res) {
             });
         }
 
+        // DEBUG: log de entrada
+        console.log('🎤 [translate] Audio recibido:', {
+            size: req.file?.buffer?.length,
+            mime: req.file?.mimetype,
+            originalname: req.file?.originalname,
+            conversationId,
+            requestedFormat
+        });
+
         const { originalText, translatedText } = await transcribeAndTranslate({
             audioBuffer: req.file.buffer,
             format: resolveAudioFormat(req.file, requestedFormat),
             sourceLanguage: conversation.sourceLanguage,
             targetLanguage: conversation.targetLanguage
+        });
+
+        // DEBUG: log de salida
+        console.log('📝 [translate] STT resultado:', {
+            originalText: originalText?.substring(0, 100),
+            translatedText: translatedText?.substring(0, 100),
+            empty: !originalText
         });
 
         // Fragmento sin voz (solo silencio): no es un error y no se guarda nada.
