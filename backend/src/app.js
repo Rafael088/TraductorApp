@@ -20,6 +20,16 @@ app.use(
     })
 )
 app.use(express.json())
+
+// Registro de peticiones: para ver desde consola qué llega del teléfono.
+// Quitar cuando ya no se necesite el diagnóstico.
+app.use((req, res, next) => {
+    res.on('finish', () => {
+        console.log(`[http] ${req.method} ${req.originalUrl} -> ${res.statusCode}`);
+    });
+    next();
+});
+
 app.use(users)
 app.use(chats)
 app.use(conversations)
