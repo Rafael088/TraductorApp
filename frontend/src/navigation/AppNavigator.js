@@ -39,11 +39,7 @@ function AppTabs() {
         {({ navigation }) => (
           <HistorialScreen
             onSelectConversation={(conversation) =>
-              // El lector (más abajo) recibe route.params.conversationId:
-              // el nombre del parámetro debe coincidir con él.
-              navigation.navigate('Conversacion', {
-                conversationId: conversation._id,
-              })
+              navigation.navigate('Conversacion', { conversationId: conversation._id })
             }
           />
         )}

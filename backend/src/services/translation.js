@@ -143,6 +143,7 @@ const HALLUCINATION_MARGIN_SECONDS = 1;
 function pickSpeech({ text, duration, segments } = {}) {
     if (!Number.isFinite(duration) || !Array.isArray(segments) || segments.length === 0) {
         // Respuesta sin metadatos: nos quedamos con el texto tal cual.
+        console.log('🟡 [pickSpeech] Sin metadata, texto crudo:', text?.substring(0, 100));
         return typeof text === "string" ? text.trim() : "";
     }
 
@@ -151,7 +152,17 @@ function pickSpeech({ text, duration, segments } = {}) {
         (segment) => Number.isFinite(segment?.end) && segment.end <= realEnd
     );
 
+    // DEBUG: log de filtrado
+    console.log('🟣 [pickSpeech] Filtrado:', {
+        duration,
+        realEnd,
+        totalSegments: segments.length,
+        keptSegments: spokenSegments.length,
+        discarded: segments.length - spokenSegments.length
+    });
+
     if (spokenSegments.length === 0) {
+        console.log('🔴 [pickSpeech] TODOS descartados → vacío');
         return "";
     }
 
@@ -202,6 +213,14 @@ export async function speechToText({
         "Groq",
         "stt"
     );
+
+    // DEBUG: log respuesta cruda de Groq
+    console.log('🔵 [Groq STT] Respuesta:', {
+        text: data?.text?.substring(0, 100),
+        duration: data?.duration,
+        segments: data?.segments?.length,
+        language: data?.language
+    });
 
     return pickSpeech(data);
 }

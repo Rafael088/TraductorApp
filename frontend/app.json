@@ -1,13 +1,24 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "TraduFly",
+    "slug": "TraductorApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash":{
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetsBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.Tradufly.traductorapp",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app uses the microphone to record audio for translation",
+        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to convert spoken language into text for translation"
+      }
     },
     "android": {
       "adaptiveIcon": {
